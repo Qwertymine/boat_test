@@ -32,14 +32,16 @@ function flow_boat_test(pos,self)
 	local max_water_speed = 6
 	local max_player_speed = 8
 	local water_accel = 2
-	local player_accel = 6
+	local player_accel = 3
 	local flow = {}
 	local velocity = object:getvelocity()
 	local realpos = pos
 	local pos = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.5),z=math.floor(pos.z+0.5)}
 	local node   = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = node.param2
-
+	
+	--setup the object variable for any later use
+	self.v = get_v(self.object:getvelocity()) * get_sign(self.v)
 	--if not in water but touching, move centre to touching block
 	--x has higher precedence than z
 	--if pos changes with x, it affects z
@@ -69,6 +71,7 @@ function flow_boat_test(pos,self)
 	--get initial water direction
 	flow = quick_water_flow(pos)
 	
+	--set acceleration due to water
 	flow.x = flow.x * water_accel
 	flow.z = flow.z * water_accel
 
@@ -174,8 +177,36 @@ function flow_boat_test(pos,self)
 			flow.y = -10
 		end
 	end
+	
+	local driacc = {x=0,y=0,z=0}
+	if driver then
+		local driver_accel_vector = {x=0,y=0,z=0}
+		local driver_turn_vector = {x=0,y=0,z=0}
+		local ctrl = self.driver:get_player_control()
+		local yaw = object:getyaw()
+		if ctrl.up then
+			driver_accel_vector = get_velocity_vector(player_accel,yaw,driver_accel_vector.y)
+		elseif ctrl.down then
+			driver_accel_vector = get_velocity_vector(-player_accel,yaw,driver_accel_vector.y)
+		end
+		if ctrl.left then
+			if self.v < 0 then
+				driver_turn_vector = get_velocity_vector(-player_accel,yaw+90,driver_turn_vector.y)
+			else
+				driver_turn_vector = get_velocity_vector(player_accel,yaw-90,driver_turn_vector.y)
+			end
+		elseif ctrl.right then
+			if self.v < 0 then
+				driver_turn_vector = get_velocity_vector(player_accel,yaw+90,driver_turn_vector.y)
+			else
+				driver_turn_vector = get_velocity_vector(-player_accel,yaw-90,driver_turn_vector.y)
+			end
+		end
+		driacc = { x=driver_accel_vector.x+driver_turn_vector.x,y=driver_accel_vector.y+driver_turn_vector.y,z=driver_accel_vector.z+driver_turn_vector.z}
+	end
+	--add any more functionality before this block
 	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
-	object:setacceleration({x=flow.x*water_accel,y=flow.y,z=flow.z*water_accel})
+	object:setacceleration({x=flow.x+driacc.x,y=flow.y+driacc.y,z=flow.z+driacc.z})
 
 end
 
