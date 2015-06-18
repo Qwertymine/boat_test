@@ -5,10 +5,30 @@ dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 local BOATRAD = 0.4
 local COMPLEXPHYSICS = false
 
-function flow_boat_test(pos,object,driver)
+local function get_sign(i)
+	if i == 0 then
+		return 0
+	else
+		return i / math.abs(i)
+	end
+end
+
+local function get_velocity_vector(v, yaw, y)
+	local x = -math.sin(yaw) * v
+	local z =  math.cos(yaw) * v
+	return {x = x, y = y, z = z}
+end
+
+local function get_v(v)
+	return math.sqrt(v.x ^ 2 + v.z ^ 2)
+end
+
+function flow_boat_test(pos,self)
 
 	--need to get y - 2 or 2 y nodes below
-
+	
+	local driver = self.driver
+	local object = self.object
 	local max_water_speed = 6
 	local max_player_speed = 8
 	local water_accel = 4
@@ -228,21 +248,11 @@ end
 
 function boat_test.on_step(self, dtime)
 	local pos = self.object:getpos()
-	flow_boat_test(pos,self.object,self.driver)
+	flow_boat_test(pos,self)
 	--self.object:setvelocity(flow)
 end
 
 minetest.register_entity("boat_test:boat", boat_test)
-
-
-
-local function is_water(pos)
-	local nn = minetest.get_node(pos).name
-	return minetest.get_item_group(nn, "water") ~= 0
-end
-
-
-
 
 minetest.register_craftitem("boat_test:boat", {
 	description = "boat_test boat boat",
