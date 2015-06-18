@@ -31,7 +31,8 @@ function flow_boat_test(pos,self)
 	local object = self.object
 	local max_water_speed = 6
 	local max_player_speed = 8
-	local water_accel = 4
+	local water_accel = 2
+	local player_accel = 6
 	local flow = {}
 	local velocity = object:getvelocity()
 	local realpos = pos
@@ -68,10 +69,9 @@ function flow_boat_test(pos,self)
 	--get initial water direction
 	flow = quick_water_flow(pos)
 	
-	object:setacceleration({x=flow.x*water_accel,y=flow.y,z=flow.z*water_accel})
-	--object:setvelocity({x=x,y=y,z=z}) --this is a test to see it's pathfinding
+	flow.x = flow.x * water_accel
+	flow.z = flow.z * water_accel
 
-	
 	--make it float
 	if is_water(pos) and flow.y == 0 then
 		if object:get_luaentity().in_water == false then
@@ -155,9 +155,9 @@ function flow_boat_test(pos,self)
 		object:get_luaentity().in_water = true
 		--slow down boats that fall into water smoothly
 		if velocity.y < 0 then
-			object:setacceleration({x=flow.x*water_accel,y=10,z=flow.z*water_accel})
+			flow.y = 10
 		else
-			object:setacceleration({x=flow.x*water_accel,y=4,z=flow.z*water_accel})
+			flow.y = 4
 		end
 	end
 	
@@ -166,14 +166,16 @@ function flow_boat_test(pos,self)
 		--beach it
 		if minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name].walkable == true then
 			object:get_luaentity().in_water = false
-			object:setacceleration({x=0,y=-10,z=0})
-			object:setvelocity({x=0,y=velocity.y,z=0})
+			flow.y = -10
+			velocity.x = 0
+			velocity.z = 0
 		else
 			object:get_luaentity().in_water = false
-			object:setacceleration({x=flow.x*water_accel,y=-10,z=flow.z*water_accel})
+			flow.y = -10
 		end
 	end
-	
+	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
+	object:setacceleration({x=flow.x*water_accel,y=flow.y,z=flow.z*water_accel})
 
 end
 
