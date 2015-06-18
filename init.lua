@@ -25,7 +25,8 @@ end
 
 function flow_boat_test(pos,self)
 
-	--need to get y - 2 or 2 y nodes below
+
+	
 	
 	local driver = self.driver
 	local object = self.object
@@ -33,6 +34,7 @@ function flow_boat_test(pos,self)
 	local max_player_speed = 8
 	local water_accel = 2
 	local player_accel = 3
+	
 	local flow = {}
 	local velocity = object:getvelocity()
 	local realpos = pos
@@ -41,7 +43,11 @@ function flow_boat_test(pos,self)
 	local param2 = node.param2
 	
 	--setup the object variable for any later use
-	self.v = get_v(self.object:getvelocity()) * get_sign(self.v)
+	self.v = math.abs(get_v(velocity))
+	
+	local player_turn = 1 * self.v
+	
+	
 	--if not in water but touching, move centre to touching block
 	--x has higher precedence than z
 	--if pos changes with x, it affects z
@@ -188,18 +194,19 @@ function flow_boat_test(pos,self)
 			driver_accel_vector = get_velocity_vector(player_accel,yaw,driver_accel_vector.y)
 		elseif ctrl.down then
 			driver_accel_vector = get_velocity_vector(-player_accel,yaw,driver_accel_vector.y)
+			minetest.chat_send_all(self.v)
 		end
 		if ctrl.left then
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(-player_accel,yaw+90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(player_turn,yaw-90,driver_turn_vector.y)
 			else
-				driver_turn_vector = get_velocity_vector(player_accel,yaw-90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(player_turn,yaw+90,driver_turn_vector.y)
 			end
 		elseif ctrl.right then
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(player_accel,yaw+90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(-player_turn,yaw-90,driver_turn_vector.y)
 			else
-				driver_turn_vector = get_velocity_vector(-player_accel,yaw-90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(-player_turn,yaw+90,driver_turn_vector.y)
 			end
 		end
 		driacc = { x=driver_accel_vector.x+driver_turn_vector.x,y=driver_accel_vector.y+driver_turn_vector.y,z=driver_accel_vector.z+driver_turn_vector.z}
