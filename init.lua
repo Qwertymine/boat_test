@@ -198,13 +198,13 @@ function flow_boat_test(pos,self)
 		end
 		if ctrl.left then
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(player_turn,yaw-90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(-player_turn,yaw+90,driver_turn_vector.y)
 			else
 				driver_turn_vector = get_velocity_vector(player_turn,yaw+90,driver_turn_vector.y)
 			end
 		elseif ctrl.right then
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(-player_turn,yaw-90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(player_turn,yaw+90,driver_turn_vector.y)
 			else
 				driver_turn_vector = get_velocity_vector(-player_turn,yaw+90,driver_turn_vector.y)
 			end
