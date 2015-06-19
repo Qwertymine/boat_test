@@ -150,7 +150,7 @@ function boat_test.on_step(self, dtime)
 	--make it float
 	if is_water(pos) and flow.y == 0 then
 		if COMPLEXPHYSICS then
-			boat_particles(object,velocity)
+			boat_particles(object,velocity,realpos)
 		end
 		object:get_luaentity().in_water = true
 		--slow down boats that fall into water smoothly

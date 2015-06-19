@@ -107,7 +107,7 @@ function is_water(pos)
 	return (minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y,z=pos.z}).name, "water") ~= 0)
 end
 
-function boat_particles(object,velocity)
+function boat_particles(object,velocity,realpos)
 	if object:get_luaentity().in_water == false then
 		--do sounds and particles for water bounces
 		if velocity.y < 0 and velocity.y > -3 then
