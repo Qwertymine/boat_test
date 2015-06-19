@@ -4,7 +4,7 @@ dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 
 --values for complex physics
 local BOATRAD = 0.4
-local COMPLEXPHYSICS = true
+local COMPLEXPHYSICS = false
 
 local function get_sign(i)
 	if i == 0 then
@@ -161,7 +161,6 @@ function boat_test.on_step(self, dtime)
 			driver_accel_vector = get_velocity_vector(player_accel,yaw,driver_accel_vector.y)
 		elseif ctrl.down then
 			driver_accel_vector = get_velocity_vector(-player_accel,yaw,driver_accel_vector.y)
-			minetest.chat_send_all(self.v)
 		end
 		if ctrl.left then
 			if self.v < 0 then
@@ -171,9 +170,9 @@ function boat_test.on_step(self, dtime)
 			end
 		elseif ctrl.right then
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(player_turn,yaw+90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(player_turn,yaw+89,driver_turn_vector.y)
 			else
-				driver_turn_vector = get_velocity_vector(-player_turn,yaw+90,driver_turn_vector.y)
+				driver_turn_vector = get_velocity_vector(-player_turn,yaw+89,driver_turn_vector.y)
 			end
 		end
 		driacc = { x=driver_accel_vector.x+driver_turn_vector.x,y=driver_accel_vector.y+driver_turn_vector.y,z=driver_accel_vector.z+driver_turn_vector.z}
