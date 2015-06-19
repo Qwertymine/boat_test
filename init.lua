@@ -6,14 +6,7 @@ dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 local BOATRAD = 0.4
 local COMPLEXPHYSICS = false
 
-local function get_sign(i)
-	if i == 0 then
-		return 0
-	else
-		return i / math.abs(i)
-	end
-end
-
+--helper functions
 local function get_velocity_vector(v, yaw, y)
 	local x = -math.sin(yaw) * v
 	local z =  math.cos(yaw) * v
@@ -94,32 +87,39 @@ end
 
 function boat_test.on_step(self, dtime)
 	
+	--object synonims
 	local driver = self.driver
 	local object = self.object
-	local water_accel = 2
+	--physics constants
 	local player_mass = 740 --N
 	local boat_mass = 1000 --N
 	local player_force = 3*1740 --N
 	local water_force = 3*1000 --N
 	local player_turn_force = 3*1000 --N
-	local water_resistance = 100 --N
+	local water_resistance = 100 --N/speed^2
 	local total_mass = boat_mass
-	
-	local flow = {}
-	local water_force_total = {}
+	--vectors
+	local flow = {x=0,y=0,z=0}
 	local water_resistance_vector = {x=0,y=0,z=0}
+	--other
 	local velocity = object:getvelocity()
 	local realpos = self.object:getpos()
 	local pos = {x=math.floor(realpos.x+0.5),y=math.floor(realpos.y+0.5),z=math.floor(realpos.z+0.5)}
 	local node   = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = node.param2
+	local beached = false
 	
 	--setup physics variables
 	local yaw = object:getyaw()
 	--setup self.v and any dependant variables
 	self.v = math.abs(get_v(velocity))
 	
-	player_turn_force = player_turn_force * math.sqrt(self.v)
+	if self.v < 1 then
+		player_turn_force = player_turn_force * math.sqrt(self.v)
+	else
+		player_turn_force = player_turn_force * self.v
+	end
+	
 	water_resistance_vector = get_velocity_vector(water_resistance*self.v*self.v,yaw,water_resistance_vector.y)
 	
 	
@@ -131,11 +131,11 @@ function boat_test.on_step(self, dtime)
 	--get initial water direction
 	flow = quick_water_flow(pos,node)
 	
-	water_force_total = {x=flow.x*water_force,y=0,z=flow.z*water_force}
+	flow = {x=flow.x*water_force,y=0,z=flow.z*water_force}
 	
 	
 	--make it float
-	if node_is_water(node) and flow.y == 0 then
+	if node_is_water(node) then
 		if COMPLEXPHYSICS then
 			boat_particles(object,velocity,realpos)
 		end
@@ -146,52 +146,58 @@ function boat_test.on_step(self, dtime)
 		else
 			flow.y = 4
 		end
-	end
-	
 	--make it fall when not in water
-	if not node_is_water(node) then
-		--beach it
+	else--beach it
 		if minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name].walkable == true then
 			object:get_luaentity().in_water = false
 			flow.y = -10
 			velocity.x = 0
 			velocity.z = 0
+			beached = true
 		else
 			object:get_luaentity().in_water = false
 			flow.y = -10
 		end
 	end
 	
-	local player_force_total = {x=0,y=0,z=0}
 	if driver then
 		total_mass = boat_mass + player_mass
 		local player_force_vector = {x=0,y=0,z=0}
 		local turn_force_vector = {x=0,y=0,z=0}
 		local ctrl = self.driver:get_player_control()
-		if ctrl.up then
+		if ctrl.up and not beached then
 			player_force_vector = get_velocity_vector(player_force,yaw,player_force_vector.y)
-		elseif ctrl.down then
+		elseif ctrl.down and not beached then
 			player_force_vector = get_velocity_vector(-player_force,yaw,player_force_vector.y)
 		end
+		--add to flow
+		flow = {x=flow.x+player_force_vector.x,y=flow.y,z=flow.z+player_force_vector.z}
+		
 		if ctrl.left then
-			if self.v < 0 then
-				turn_force_vector = get_velocity_vector(-player_turn_force,yaw+90,turn_force_vector.y)
-			else
-				turn_force_vector = get_velocity_vector(player_turn_force,yaw+90,turn_force_vector.y)
+			if self.v < 0.05 then
+				self.v = 0.05
+				local temp = get_velocity_vector(self.v,yaw,velocity.y)
+				velocity = {x=temp.x,y=velocity.y,z=temp.z}
 			end
+			turn_force_vector = get_velocity_vector(player_turn_force,yaw+90,turn_force_vector.y)
 		elseif ctrl.right then
 		--correct yaw change to turn right is 89 for some reason...
-			if self.v < 0 then
-				turn_force_vector = get_velocity_vector(player_turn_force,yaw+89,turn_force_vector.y)
-			else
-				turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,turn_force_vector.y)
+			if self.v < 0.05 then
+				self.v = 0.05
+				local temp = get_velocity_vector(self.v,yaw,velocity.y)
+				velocity = {x=temp.x,y=velocity.y,z=temp.z}
 			end
+			turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,turn_force_vector.y)
 		end
-		player_force_total = { x=player_force_vector.x+turn_force_vector.x,y=player_force_vector.y+turn_force_vector.y,z=player_force_vector.z+turn_force_vector.z}
+		--add to flow
+		flow = {x=flow.x+turn_force_vector.x,y=flow.y,z=flow.z+turn_force_vector.z}
+		if ctrl.jump then
+			minetest.chat_send_all(self.v .. "," .. dtime)
+		end
 	end
 	--add any more functionality before this block
 	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
-	object:setacceleration({x=(water_force_total.x+player_force_total.x-water_resistance_vector.x)/total_mass,y=flow.y,z=(water_force_total.z+player_force_total.z-water_resistance_vector.z)/total_mass})
+	object:setacceleration({x=(flow.x-water_resistance_vector.x)/total_mass,y=flow.y,z=(flow.z-water_resistance_vector.z)/total_mass})
 end
 
 minetest.register_entity("boat_test:boat", boat_test)
