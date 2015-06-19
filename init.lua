@@ -93,7 +93,6 @@ function boat_test.on_punch(self, puncher, time_from_last_punch, tool_capabiliti
 end
 
 function boat_test.on_step(self, dtime)
-	local pos = self.object:getpos()
 	
 	local driver = self.driver
 	local object = self.object
@@ -104,20 +103,15 @@ function boat_test.on_step(self, dtime)
 	
 	local flow = {}
 	local velocity = object:getvelocity()
-	local realpos = pos
-	local pos = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.5),z=math.floor(pos.z+0.5)}
+	local realpos = self.object:getpos()
+	local pos = {x=math.floor(realpos.x+0.5),y=math.floor(realpos.y+0.5),z=math.floor(realpos.z+0.5)}
 	local node   = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = node.param2
 	
 	--setup the object variable for any later use
 	self.v = math.abs(get_v(velocity))
-	
 	local player_turn = 1 * self.v
 	
-	
-	--if not in water but touching, move centre to touching block
-	--x has higher precedence than z
-	--if pos changes with x, it affects z
 	if COMPLEXPHYSICS and minetest.get_item_group(node.name, "water") == 0 then
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
