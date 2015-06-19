@@ -117,7 +117,7 @@ function boat_test.on_step(self, dtime)
 	end
 	
 	--get initial water direction
-	flow = quick_water_flow(pos)
+	flow = water_flow(pos)
 	
 	--set acceleration due to water
 	flow.x = flow.x * water_accel
@@ -169,6 +169,7 @@ function boat_test.on_step(self, dtime)
 				driver_turn_vector = get_velocity_vector(player_turn,yaw+90,driver_turn_vector.y)
 			end
 		elseif ctrl.right then
+		--correct yaw change to turn right is 89 for some reason...
 			if self.v < 0 then
 				driver_turn_vector = get_velocity_vector(player_turn,yaw+89,driver_turn_vector.y)
 			else

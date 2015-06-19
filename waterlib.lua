@@ -12,7 +12,7 @@ local function get_mod_node_param2(pos)
 	--water above
 		if minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name, "water") ~= 0 then
 			param2 = 8
-		--water below 	--MODIFY THE PARAM2 IF NODE IS SOURCE OR IF NODE IS FLOWING WATER WITH FLOWING WATER BELOW IT (NEEDS TO SUBTRACT 8)
+		--water below 	--MODIFY THE PARAM2 IF NODE IS FLOWING WATER WITH FLOWING WATER BELOW IT (NEEDS TO SUBTRACT 8)
 		elseif minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name, "water") ~= 0  then
 			param2 = param2 - 8
 		-- else keep default
@@ -53,7 +53,7 @@ end
 
 --8 directions only + 0
 --returns values between -1 and 1
-function quick_8d_water_flow(pos)
+function 8d_water_flow(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = get_mod_node_param2(pos)
 	local param2_testing = nil
@@ -81,7 +81,7 @@ end
 
 --full 16 directions + 0 --matches rendered directions
 --returns values between -2 and 2
-function quick_water_flow(pos)
+function water_flow(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = get_mod_node_param2(pos)
 	local param2_testing = nil
