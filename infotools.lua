@@ -51,7 +51,7 @@ minetest.register_craftitem("boat_test:flowstick", {
 })
 
 minetest.register_craft({
-	output = "boat_test:boat",
+	output = "boat_test:flowstick",
 	recipe = {
 		{"default:diamond","default:diamond","default:diamond"},
 		{"default:diamond","default:stick",  "default:diamond"},
