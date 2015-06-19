@@ -23,10 +23,76 @@ local function get_v(v)
 	return math.sqrt(v.x ^ 2 + v.z ^ 2)
 end
 
-function flow_boat_test(pos,self)
+local boat_test = {
+	physical = true,
+	collisionbox = {-0.4, -0.4, -0.4, 0.4, 0.3, 0.4},
+	visual = "mesh",
+	mesh = "boat.obj",
+	textures = {"default_wood.png"},
+	automatic_face_movement_dir = -90.0,
+	driver = nil,
+	v = 0,
+	last_v = 0,
+	removed = false,
+	in_water = false,
+}
 
+function boat_test.on_rightclick(self, clicker)
+	if not clicker or not clicker:is_player() then
+		return
+	end
+	local name = clicker:get_player_name()
+	if self.driver and clicker == self.driver then
+		self.driver = nil
+		clicker:set_detach()
+		default.player_attached[name] = false
+		default.player_set_animation(clicker, "stand" , 30)
+	elseif not self.driver then
+		self.driver = clicker
+		clicker:set_attach(self.object, "", {x = 0, y = 11, z = -3}, {x = 0, y = 0, z = 0})
+		default.player_attached[name] = true
+		minetest.after(0.2, function()
+			default.player_set_animation(clicker, "sit" , 30)
+		end)
+		self.object:setyaw(clicker:get_look_yaw() - math.pi / 2)
+	end
+end
 
-	
+function boat_test.on_activate(self, staticdata, dtime_s)
+	self.object:set_armor_groups({immortal = 1})
+	if staticdata then
+		self.v = tonumber(staticdata)
+	end
+	self.last_v = self.v
+end
+
+function boat_test.get_staticdata(self)
+	return tostring(self.v)
+end
+
+function boat_test.on_punch(self, puncher, time_from_last_punch, tool_capabilities, direction)
+	if not puncher or not puncher:is_player() or self.removed then
+		return
+	end
+	if self.driver and puncher == self.driver then
+		self.driver = nil
+		puncher:set_detach()
+		default.player_attached[puncher:get_player_name()] = false
+	end
+	if not self.driver then
+		self.removed = true
+		-- delay remove to ensure player is detached
+		minetest.after(0.1, function()
+			self.object:remove()
+		end)
+		if not minetest.setting_getbool("creative_mode") then
+			puncher:get_inventory():add_item("main", "boat_test:boat")
+		end
+	end
+end
+
+function boat_test.on_step(self, dtime)
+	local pos = self.object:getpos()
 	
 	local driver = self.driver
 	local object = self.object
@@ -214,81 +280,6 @@ function flow_boat_test(pos,self)
 	--add any more functionality before this block
 	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
 	object:setacceleration({x=flow.x+driacc.x,y=flow.y+driacc.y,z=flow.z+driacc.z})
-
-end
-
-
-local boat_test = {
-	physical = true,
-	collisionbox = {-0.4, -0.4, -0.4, 0.4, 0.3, 0.4},
-	visual = "mesh",
-	mesh = "boat.obj",
-	textures = {"default_wood.png"},
-	automatic_face_movement_dir = -90.0,
-	driver = nil,
-	v = 0,
-	last_v = 0,
-	removed = false,
-	in_water = false,
-}
-
-function boat_test.on_rightclick(self, clicker)
-	if not clicker or not clicker:is_player() then
-		return
-	end
-	local name = clicker:get_player_name()
-	if self.driver and clicker == self.driver then
-		self.driver = nil
-		clicker:set_detach()
-		default.player_attached[name] = false
-		default.player_set_animation(clicker, "stand" , 30)
-	elseif not self.driver then
-		self.driver = clicker
-		clicker:set_attach(self.object, "", {x = 0, y = 11, z = -3}, {x = 0, y = 0, z = 0})
-		default.player_attached[name] = true
-		minetest.after(0.2, function()
-			default.player_set_animation(clicker, "sit" , 30)
-		end)
-		self.object:setyaw(clicker:get_look_yaw() - math.pi / 2)
-	end
-end
-
-function boat_test.on_activate(self, staticdata, dtime_s)
-	self.object:set_armor_groups({immortal = 1})
-	if staticdata then
-		self.v = tonumber(staticdata)
-	end
-	self.last_v = self.v
-end
-
-function boat_test.get_staticdata(self)
-	return tostring(self.v)
-end
-
-function boat_test.on_punch(self, puncher, time_from_last_punch, tool_capabilities, direction)
-	if not puncher or not puncher:is_player() or self.removed then
-		return
-	end
-	if self.driver and puncher == self.driver then
-		self.driver = nil
-		puncher:set_detach()
-		default.player_attached[puncher:get_player_name()] = false
-	end
-	if not self.driver then
-		self.removed = true
-		-- delay remove to ensure player is detached
-		minetest.after(0.1, function()
-			self.object:remove()
-		end)
-		if not minetest.setting_getbool("creative_mode") then
-			puncher:get_inventory():add_item("main", "boat_test:boat")
-		end
-	end
-end
-
-function boat_test.on_step(self, dtime)
-	local pos = self.object:getpos()
-	flow_boat_test(pos,self)
 	--self.object:setvelocity(flow)
 end
 
