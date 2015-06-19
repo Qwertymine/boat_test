@@ -1,9 +1,10 @@
 dofile(minetest.get_modpath("boat_test").."/waterlib.lua")
+dofile(minetest.get_modpath("boat_test").."/complexphy.lua")
 dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 
 --values for complex physics
 local BOATRAD = 0.4
-local COMPLEXPHYSICS = false
+local COMPLEXPHYSICS = true
 
 local function get_sign(i)
 	if i == 0 then
@@ -117,27 +118,8 @@ function boat_test.on_step(self, dtime)
 	--if not in water but touching, move centre to touching block
 	--x has higher precedence than z
 	--if pos changes with x, it affects z
-	if COMPLEXPHYSICS then
-		if minetest.get_item_group(node.name, "water") == 0 then
-			if is_touching_water(realpos.x,pos.x,BOATRAD) then
-				if is_water({x=pos.x-1,y=pos.y,z=pos.z}) then
-					node = minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
-					pos = {x=pos.x-1,y=pos.y,z=pos.z}
-				elseif is_water({x=pos.x+1,y=pos.y,z=pos.z}) then
-					node = minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
-					pos = {x=pos.x+1,y=pos.y,z=pos.z}
-				end
-			end
-			if is_touching_water(realpos.z,pos.z,BOATRAD) then
-				if is_water({x=pos.x,y=pos.y,z=pos.z-1}) then
-					node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
-					pos = {x=pos.x,y=pos.y,z=pos.z-1}
-				elseif is_water({x=pos.x,y=pos.y,z=pos.z+1}) then
-					node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
-					pos = {x=pos.x,y=pos.y,z=pos.z+1}
-				end
-			end
-		end
+	if COMPLEXPHYSICS and minetest.get_item_group(node.name, "water") == 0 then
+		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
 	
 	--get initial water direction
