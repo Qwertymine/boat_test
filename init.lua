@@ -117,7 +117,7 @@ function boat_test.on_step(self, dtime)
 	end
 	
 	--get initial water direction
-	flow = water_flow(pos)
+	flow = quick_water_flow(pos,node)
 	
 	--set acceleration due to water
 	flow.x = flow.x * water_accel

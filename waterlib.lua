@@ -53,10 +53,9 @@ end
 
 --8 directions only + 0
 --returns values between -1 and 1
-function 8d_water_flow(pos)
+function water_flow_8d(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = get_mod_node_param2(pos)
-	local param2_testing = nil
 	local is_source = false
 	local x = 0
 	local z = 0
@@ -84,7 +83,6 @@ end
 function water_flow(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
 	local param2 = get_mod_node_param2(pos)
-	local param2_testing = nil
 	local is_source = false
 	local x = 0
 	local z = 0
@@ -107,7 +105,47 @@ function is_water(pos)
 	return (minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y,z=pos.z}).name, "water") ~= 0)
 end
 
+local function quick_water_flow_logic(node,pos_testing,direction)
+	if node.name == "default:water_source" then
+		local node_testing = minetest.get_node(pos_testing)
+		local param2_testing = node_testing.param2
+		if node_testing.name ~= "default:water_flowing" then
+			return 0
+		else
+			return direction
+		end
+	elseif node.name == "default:water_flowing" then
+		local node_testing = minetest.get_node(pos_testing)
+		local param2_testing = node_testing.param2
+		if node_testing.name == "default:water_source" then
+			return -direction
+		elseif node_testing.name == "default:water_flowing" then
+			if param2_testing < node.param2 then
+				return direction
+			elseif param2_testing > node.param2 then
+				if param2_testing - node.param2 > 7 then
+					return direction
+				else
+					return -direction
+				end
+			end
+		end
+	end
+	return 0
+end
 
+function quick_water_flow(pos,node)
+	local is_source = false
+	local x = 0
+	local z = 0
+	
+	x = x + quick_water_flow_logic(node,{x=pos.x-1,y=pos.y,z=pos.z},-1)
+	x = x + quick_water_flow_logic(node,{x=pos.x+1,y=pos.y,z=pos.z}, 1)
+	z = z + quick_water_flow_logic(node,{x=pos.x,y=pos.y,z=pos.z-1},-1)
+	z = z + quick_water_flow_logic(node,{x=pos.x,y=pos.y,z=pos.z+1}, 1)
+	
+	return to_unit_vector({x=x,y=0,z=z})
+end
 --[[
 function get_quick_mod_node_param2(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
