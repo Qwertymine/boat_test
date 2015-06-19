@@ -97,13 +97,14 @@ function boat_test.on_step(self, dtime)
 	local driver = self.driver
 	local object = self.object
 	local water_accel = 2
-	local player_accel = 3
 	local player_mass = 740 --N
 	local boat_mass = 1000 --N
 	local player_force = 3*1740
 	local water_force = 3*1000
+	local player_turn_force = 3*1000
 	
 	local flow = {}
+	local water_force_total = {}
 	local velocity = object:getvelocity()
 	local realpos = self.object:getpos()
 	local pos = {x=math.floor(realpos.x+0.5),y=math.floor(realpos.y+0.5),z=math.floor(realpos.z+0.5)}
@@ -112,7 +113,9 @@ function boat_test.on_step(self, dtime)
 	
 	--setup the object variable for any later use
 	self.v = math.abs(get_v(velocity))
-	local player_turn = 1 * self.v
+	player_turn_force = player_turn_force * math.sqrt(self.v)
+	
+	local total_mass = boat_mass
 	
 	if COMPLEXPHYSICS and minetest.get_item_group(node.name, "water") == 0 then
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
@@ -121,12 +124,11 @@ function boat_test.on_step(self, dtime)
 	--get initial water direction
 	flow = quick_water_flow(pos,node)
 	
-	--set acceleration due to water
-	flow.x = flow.x * water_accel
-	flow.z = flow.z * water_accel
-
+	water_force_total = {x=flow.x*water_force,y=0,z=flow.z*water_force}
+	
+	
 	--make it float
-	if is_water(pos) and flow.y == 0 then
+	if node_is_water(node) and flow.y == 0 then
 		if COMPLEXPHYSICS then
 			boat_particles(object,velocity,realpos)
 		end
@@ -140,7 +142,7 @@ function boat_test.on_step(self, dtime)
 	end
 	
 	--make it fall when not in water
-	if not is_water(pos) then
+	if not node_is_water(node) then
 		--beach it
 		if minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name].walkable == true then
 			object:get_luaentity().in_water = false
@@ -153,37 +155,37 @@ function boat_test.on_step(self, dtime)
 		end
 	end
 	
-	local driacc = {x=0,y=0,z=0}
+	local player_force_total = {x=0,y=0,z=0}
 	if driver then
-		local driver_accel_vector = {x=0,y=0,z=0}
-		local driver_turn_vector = {x=0,y=0,z=0}
+		total_mass = boat_mass + player_mass
+		local player_force_vector = {x=0,y=0,z=0}
+		local turn_force_vector = {x=0,y=0,z=0}
 		local ctrl = self.driver:get_player_control()
 		local yaw = object:getyaw()
 		if ctrl.up then
-			driver_accel_vector = get_velocity_vector(player_accel,yaw,driver_accel_vector.y)
+			player_force_vector = get_velocity_vector(player_force,yaw,player_force_vector.y)
 		elseif ctrl.down then
-			driver_accel_vector = get_velocity_vector(-player_accel,yaw,driver_accel_vector.y)
+			player_force_vector = get_velocity_vector(-player_force,yaw,player_force_vector.y)
 		end
 		if ctrl.left then
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(-player_turn,yaw+90,driver_turn_vector.y)
+				turn_force_vector = get_velocity_vector(-player_turn_force,yaw+90,turn_force_vector.y)
 			else
-				driver_turn_vector = get_velocity_vector(player_turn,yaw+90,driver_turn_vector.y)
+				turn_force_vector = get_velocity_vector(player_turn_force,yaw+90,turn_force_vector.y)
 			end
 		elseif ctrl.right then
 		--correct yaw change to turn right is 89 for some reason...
 			if self.v < 0 then
-				driver_turn_vector = get_velocity_vector(player_turn,yaw+89,driver_turn_vector.y)
+				turn_force_vector = get_velocity_vector(player_turn_force,yaw+89,turn_force_vector.y)
 			else
-				driver_turn_vector = get_velocity_vector(-player_turn,yaw+89,driver_turn_vector.y)
+				turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,turn_force_vector.y)
 			end
 		end
-		driacc = { x=driver_accel_vector.x+driver_turn_vector.x,y=driver_accel_vector.y+driver_turn_vector.y,z=driver_accel_vector.z+driver_turn_vector.z}
+		player_force_total = { x=player_force_vector.x+turn_force_vector.x,y=player_force_vector.y+turn_force_vector.y,z=player_force_vector.z+turn_force_vector.z}
 	end
 	--add any more functionality before this block
 	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
-	object:setacceleration({x=flow.x+driacc.x,y=flow.y+driacc.y,z=flow.z+driacc.z})
-	--self.object:setvelocity(flow)
+	object:setacceleration({x=(water_force_total.x+player_force_total.x)/total_mass,y=flow.y,z=(water_force_total.z+player_force_total.z)/total_mass})
 end
 
 minetest.register_entity("boat_test:boat", boat_test)
