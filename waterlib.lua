@@ -78,6 +78,14 @@ function is_water(pos)
 	return (minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y,z=pos.z}).name, "water") ~= 0)
 end
 
+function node_is_water(node)
+	if node.name == "default:water_source" or node.name == "default:water_flowing" then
+		return true
+	else
+		return false
+	end
+end
+
 local function quick_water_flow_logic(node,pos_testing,direction)
 	if node.name == "default:water_source" then
 		local node_testing = minetest.get_node(pos_testing)
@@ -112,9 +120,12 @@ local function quick_water_flow_logic(node,pos_testing,direction)
 end
 
 function quick_water_flow(pos,node)
-	local is_source = false
 	local x = 0
 	local z = 0
+	
+	if not node_is_water(node) then
+		return {x=0,y=0,z=0}
+	end
 	
 	x = x + quick_water_flow_logic(node,{x=pos.x-1,y=pos.y,z=pos.z},-1)
 	x = x + quick_water_flow_logic(node,{x=pos.x+1,y=pos.y,z=pos.z}, 1)
