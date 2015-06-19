@@ -96,10 +96,12 @@ function boat_test.on_step(self, dtime)
 	
 	local driver = self.driver
 	local object = self.object
-	local max_water_speed = 6
-	local max_player_speed = 8
 	local water_accel = 2
 	local player_accel = 3
+	local player_mass = 740 --N
+	local boat_mass = 1000 --N
+	local player_force = 3*1740
+	local water_force = 3*1000
 	
 	local flow = {}
 	local velocity = object:getvelocity()
