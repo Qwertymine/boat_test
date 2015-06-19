@@ -51,33 +51,6 @@ function to_unit_vector(dir_vector)
 	return vector_out
 end
 
---8 directions only + 0
---returns values between -1 and 1
-function water_flow_8d(pos)
-	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
-	local param2 = get_mod_node_param2(pos)
-	local is_source = false
-	local x = 0
-	local z = 0
-	
-	-- water flow logic
-	x = x + water_flow_logic(param2,{x=pos.x-1,y=pos.y,z=pos.z},-1)
-	x = x + water_flow_logic(param2,{x=pos.x+1,y=pos.y,z=pos.z}, 1)
-	z = z + water_flow_logic(param2,{x=pos.x,y=pos.y,z=pos.z-1},-1)
-	z = z + water_flow_logic(param2,{x=pos.x,y=pos.y,z=pos.z+1}, 1)
-	
-	--reduce to 8 directions
-	if x ~= 0 then
-		x = x / math.abs(x)
-	end
-	
-	if z ~= 0 then
-		z = z / math.abs(z)
-	end
-	
-	return to_unit_vector({x=x,y=0,z=z})
-end
-
 --full 16 directions + 0 --matches rendered directions
 --returns values between -2 and 2
 function water_flow(pos)
@@ -121,9 +94,13 @@ local function quick_water_flow_logic(node,pos_testing,direction)
 			return -direction
 		elseif node_testing.name == "default:water_flowing" then
 			if param2_testing < node.param2 then
-				return direction
+				if (node.param2 - param2_testing) > 6 then
+					return -direction
+				else
+					return direction
+				end
 			elseif param2_testing > node.param2 then
-				if param2_testing - node.param2 > 7 then
+				if (param2_testing - node.param2) > 6 then
 					return direction
 				else
 					return -direction
@@ -146,49 +123,3 @@ function quick_water_flow(pos,node)
 	
 	return to_unit_vector({x=x,y=0,z=z})
 end
---[[
-function get_quick_mod_node_param2(pos)
-	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
-	local param2 = node.param2
-	-- 9 = water above 8 = source 8 > flowing
-	--water source or water source with water above
-	if node.name == "default:water_source" then
-		if minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name, "water") ~= 0 then
-			param2 = 9
-		else
-			param2 = 8
-		end
-	--flowing or flowing with water above
-	elseif node.name == "default:water_flowing" then
-		if param2 == 7 then
-			if minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name, "water") ~= 0 then
-				param2 = 9
-			end
-		-- else
-		-- keep default
-		end
-	end
-	return param2
-end
-
-local function get_quick_mod_node_param2(pos)
-	local node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
-	local param2 = node.param2
-	-- 9 = water above, 8 = source, 8 > flowing
-	if minetest.get_item_group(node.name,"water") ~= 0 then
-		--water above
-		if minetest.get_item_group(minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name, "water") ~= 0 then
-			param2 = 9
-		--water source
-		elseif node.name == "default:water_source" then
-			param2 = 8
-		-- else keep default
-		end
-	else
-	--if not water
-	param2 = nil
-	end
-	return param2
-end
-
---]]
