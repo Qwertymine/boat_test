@@ -94,11 +94,12 @@ function boat_test.on_step(self, dtime)
 	local player_mass = 740 --N
 	local boat_mass = 1000 --N
 	local player_force = 5220--3*1740 N
-	local water_force = 4000--4*1000 N
+	local water_force = 4500--4.5*1000 N
 	local player_turn_force = 3000--3*1000 N
-	local water_resistance = 175 --N/speed^2
+	local water_resistance = 200 --N/speed^2
 	local total_mass = boat_mass
 	--vectors
+	--flow.x and.z are forces,flow.y is acceleration
 	local flow = {x=0,y=0,z=0}
 	local water_resistance_vector = {x=0,y=0,z=0}
 	--other
