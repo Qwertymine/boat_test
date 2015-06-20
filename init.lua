@@ -94,9 +94,9 @@ function boat_test.on_step(self, dtime)
 	local player_mass = 740 --N
 	local boat_mass = 1000 --N
 	local player_force = 5220--3*1740 N
-	local water_force = 3000--3*1000 N
+	local water_force = 4000--4*1000 N
 	local player_turn_force = 3000--3*1000 N
-	local water_resistance = 100 --N/speed^2
+	local water_resistance = 175 --N/speed^2
 	local total_mass = boat_mass
 	--vectors
 	local flow = {x=0,y=0,z=0}
@@ -140,8 +140,8 @@ function boat_test.on_step(self, dtime)
 		if COMPLEXPHYSICS then
 			boat_particles(object,velocity,realpos)
 		end
-		--logic for foating smoothly in water
-		if (math.abs(velocity.y) < 0.2) and 
+		--logic for floating smoothly in water
+		if (math.abs(velocity.y) < 0.3) and 
 		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
 		(realpos.y - pos.y) > 0.2 then
 			flow.y = 0.5
@@ -160,11 +160,12 @@ function boat_test.on_step(self, dtime)
 			velocity.x = 0
 			velocity.z = 0
 			beached = true
-		--logic for foating smoothly in water
-		elseif (math.abs(velocity.y) < 0.2) and 
-		(not node_is_water(node_below)) and 
-		(pos.y - realpos.y) < -0.2 then
-			flow.y = -0.5
+		--logic for floating smoothly in water
+		elseif (math.abs(velocity.y) < 0.3) and 
+		(node_is_water(node_below)) and 
+		(pos.y - realpos.y) > 0.2 then
+		--must fall faster than float - fow physics only happen while in water
+			flow.y = -3
 		else
 			flow.y = -10
 		end
