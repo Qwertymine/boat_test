@@ -141,7 +141,10 @@ function boat_test.on_step(self, dtime)
 		end
 		object:get_luaentity().in_water = true
 		--slow down boats that fall into water smoothly
-		if velocity.y < 0 then
+		if (math.abs(velocity.y) < 0.2) and 
+		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) then
+			flow.y = 1
+		elseif velocity.y < 0 then
 			flow.y = 10
 		else
 			flow.y = 4
@@ -154,6 +157,9 @@ function boat_test.on_step(self, dtime)
 			velocity.x = 0
 			velocity.z = 0
 			beached = true
+		elseif (math.abs(velocity.y) < 0.2) and 
+		(is_water({x=pos.x,y=pos.y-1,z=pos.z})) then
+			flow.y = -1
 		else
 			object:get_luaentity().in_water = false
 			flow.y = -10
