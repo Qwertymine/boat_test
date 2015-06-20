@@ -136,14 +136,16 @@ function boat_test.on_step(self, dtime)
 	
 	--make it float
 	if node_is_water(node) then
+		object:get_luaentity().in_water = true
 		if COMPLEXPHYSICS then
 			boat_particles(object,velocity,realpos)
 		end
-		object:get_luaentity().in_water = true
-		--slow down boats that fall into water smoothly
+		--logic for foating smoothly in water
 		if (math.abs(velocity.y) < 0.2) and 
-		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) then
-			flow.y = 1
+		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
+		(realpos.y - pos.y) > 0.3 then
+			flow.y = 0.5
+		--slow down boats that fall into water smoothly
 		elseif velocity.y < 0 then
 			flow.y = 10
 		else
@@ -151,17 +153,19 @@ function boat_test.on_step(self, dtime)
 		end
 	--make it fall when not in water
 	else--beach it
-		if minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name].walkable == true then
-			object:get_luaentity().in_water = false
+		object:get_luaentity().in_water = false
+		local node_below = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+		if minetest.registered_nodes[node_below.name].walkable == true then
 			flow.y = -10
 			velocity.x = 0
 			velocity.z = 0
 			beached = true
+		--logic for foating smoothly in water
 		elseif (math.abs(velocity.y) < 0.2) and 
-		(is_water({x=pos.x,y=pos.y-1,z=pos.z})) then
-			flow.y = -1
+		(not node_is_water(node_below)) and 
+		(pos.y - realpos.y) < -0.3 then
+			flow.y = -0.5
 		else
-			object:get_luaentity().in_water = false
 			flow.y = -10
 		end
 	end
