@@ -114,11 +114,11 @@ function boat_test.on_step(self, dtime)
 	--setup self.v and any dependant variables
 	self.v = math.abs(get_v(velocity))
 	
-	if self.v < 1 then
-		player_turn_force = player_turn_force * math.sqrt(self.v)
-	else
+	--if self.v < 1 then
+		--player_turn_force = player_turn_force * math.sqrt(self.v)
+	--else
 		player_turn_force = player_turn_force * self.v
-	end
+	--end
 	
 	water_resistance_vector = get_velocity_vector(water_resistance*self.v*self.v,yaw,water_resistance_vector.y)
 	
@@ -143,7 +143,7 @@ function boat_test.on_step(self, dtime)
 		--logic for foating smoothly in water
 		if (math.abs(velocity.y) < 0.2) and 
 		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
-		(realpos.y - pos.y) > 0.3 then
+		(realpos.y - pos.y) > 0.2 then
 			flow.y = 0.5
 		--slow down boats that fall into water smoothly
 		elseif velocity.y < 0 then
@@ -163,7 +163,7 @@ function boat_test.on_step(self, dtime)
 		--logic for foating smoothly in water
 		elseif (math.abs(velocity.y) < 0.2) and 
 		(not node_is_water(node_below)) and 
-		(pos.y - realpos.y) < -0.3 then
+		(pos.y - realpos.y) < -0.2 then
 			flow.y = -0.5
 		else
 			flow.y = -10
