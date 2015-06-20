@@ -208,9 +208,11 @@ function boat_test.on_step(self, dtime)
 		end
 		--add to flow
 		flow = {x=flow.x+turn_force_vector.x,y=flow.y,z=flow.z+turn_force_vector.z}
+		--dev testing feature
+		--[[
 		if ctrl.jump then
 			minetest.chat_send_all(self.v .. "," .. dtime)
-		end
+		end--]]
 	end
 	--add any more functionality before this block
 	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
