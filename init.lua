@@ -4,7 +4,9 @@ dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 
 --values for complex physics
 local BOATRAD = 0.4
-local COMPLEXPHYSICS = false
+local PARTICLES = true
+local MOVCEN = false
+--Physics Constants are at line 100-ish
 
 --helper functions
 local function get_velocity_vector(v, yaw, y)
@@ -125,7 +127,7 @@ function boat_test.on_step(self, dtime)
 	
 	
 	--if moving the centre of the boat is expensive, disabled by default
-	if COMPLEXPHYSICS and node_is_water(node) then
+	if MOVECENTRE and node_is_water(node) then
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
 	
@@ -137,12 +139,12 @@ function boat_test.on_step(self, dtime)
 	
 	--make it float
 	if node_is_water(node) then
-		object:get_luaentity().in_water = true
-		--boat particles and sounds are unnecessary, disabled by default
-		if COMPLEXPHYSICS then
+		--boat particles and sounds are pretty, enabled by default
+		if PARTICLES then
 			boat_particles(object,velocity,realpos)
 		end
 		--logic for floating smoothly in water
+		object:get_luaentity().in_water = true
 		if (math.abs(velocity.y) < 0.3) and 
 		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
 		(realpos.y - pos.y) > 0.2 then
@@ -156,21 +158,23 @@ function boat_test.on_step(self, dtime)
 	--make it fall when not in water
 	else
 	--beach it
-		object:get_luaentity().in_water = false
 		local node_below = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
 		if minetest.registered_nodes[node_below.name].walkable == true then
 			flow.y = -10
 			velocity.x = 0
 			velocity.z = 0
 			beached = true
+			object:get_luaentity().in_water = false
 		--logic for floating smoothly in water
 		elseif (math.abs(velocity.y) < 0.3) and 
 		(node_is_water(node_below)) and 
 		(pos.y - realpos.y) > 0.2 then
-		--must fall faster than float - fow physics only happen while in water
+		--must fall faster than float - flow physics only happen while in water
 			flow.y = -3
+			object:get_luaentity().in_water = true
 		else
 			flow.y = -10
+			object:get_luaentity().in_water = false
 		end
 	end
 	
@@ -183,12 +187,11 @@ function boat_test.on_step(self, dtime)
 			player_force_vector = get_velocity_vector(player_force,yaw,player_force_vector.y)
 		elseif ctrl.down and not beached then
 			--if moving very slowly
-			if self.steps_to_turn == 0 then
-				if not (self.v < 0.2) then
-					player_force_vector = get_velocity_vector(-player_turn_force,yaw,player_force_vector.y)
-				else
-					velocity = {x=0,y=velocity.y,z=0}
-				end
+			if not (self.v < 0.2) then
+			--Multiplies by speed to avoid issues with turning multiple times
+				player_force_vector = get_velocity_vector(-player_force*self.v,yaw,player_force_vector.y)
+			else
+				velocity = {x=0,y=velocity.y,z=0}
 			end
 		end
 		--add to flow
