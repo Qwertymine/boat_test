@@ -124,8 +124,8 @@ function boat_test.on_step(self, dtime)
 	water_resistance_vector = get_velocity_vector(water_resistance*self.v*self.v,yaw,water_resistance_vector.y)
 	
 	
-	
-	if COMPLEXPHYSICS and minetest.get_item_group(node.name, "water") == 0 then
+	--if moving the centre of the boat is expensive, disabled by default
+	if COMPLEXPHYSICS and node_is_water(node) then
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
 	
@@ -138,6 +138,7 @@ function boat_test.on_step(self, dtime)
 	--make it float
 	if node_is_water(node) then
 		object:get_luaentity().in_water = true
+		--boat particles and sounds are unnecessary, disabled by default
 		if COMPLEXPHYSICS then
 			boat_particles(object,velocity,realpos)
 		end
@@ -153,7 +154,8 @@ function boat_test.on_step(self, dtime)
 			flow.y = 4
 		end
 	--make it fall when not in water
-	else--beach it
+	else
+	--beach it
 		object:get_luaentity().in_water = false
 		local node_below = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
 		if minetest.registered_nodes[node_below.name].walkable == true then
