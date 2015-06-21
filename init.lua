@@ -182,7 +182,14 @@ function boat_test.on_step(self, dtime)
 		if ctrl.up and not beached then
 			player_force_vector = get_velocity_vector(player_force,yaw,player_force_vector.y)
 		elseif ctrl.down and not beached then
-			player_force_vector = get_velocity_vector(-player_force,yaw,player_force_vector.y)
+			--if moving very slowly
+			if self.steps_to_turn == 0 then
+				if not (self.v < 0.2) then
+					player_force_vector = get_velocity_vector(-player_turn_force,yaw,player_force_vector.y)
+				else
+					velocity = {x=0,y=velocity.y,z=0}
+				end
+			end
 		end
 		--add to flow
 		flow = {x=flow.x+player_force_vector.x,y=flow.y,z=flow.z+player_force_vector.z}
