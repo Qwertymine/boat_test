@@ -5,23 +5,6 @@ minetest.register_craftitem("boat_test:infostick", {
 	on_place = function(itemstack, placer, pointed_thing)
 		minetest.chat_send_all(minetest.get_node(pointed_thing.above).param2)
 	end,
-	on_use = function(itemstack, user, pointed_thing)
-		itemstack:replace("boat_test:infostickb")
-		return itemstack
-	end,
-})
-
-minetest.register_craftitem("boat_test:infostickb", {
-	description = "Wet Infostick",
-	inventory_image = "default_stick.png",
-	liquids_pointable = true,
-	on_place = function(itemstack, placer, pointed_thing)
-		minetest.chat_send_all(minetest.get_node(pointed_thing.above).param2)
-	end,
-	on_use = function(itemstack, user, pointed_thing)
-		itemstack:replace("boat_test:infostick")
-		return itemstack
-	end,
 })
 
 minetest.register_craftitem("boat_test:quick_flowstick", {
