@@ -1,5 +1,5 @@
 minetest.register_craftitem("boat_test:infostick", {
-	description = "Uber dry Stick",
+	description = "Dry Infostick",
 	inventory_image = "default_stick.png",
 	--liquids_pointable = true,
 	on_place = function(itemstack, placer, pointed_thing)
@@ -12,7 +12,7 @@ minetest.register_craftitem("boat_test:infostick", {
 })
 
 minetest.register_craftitem("boat_test:infostickb", {
-	description = "Uber wet Stick",
+	description = "Wet Infostick",
 	inventory_image = "default_stick.png",
 	liquids_pointable = true,
 	on_place = function(itemstack, placer, pointed_thing)
