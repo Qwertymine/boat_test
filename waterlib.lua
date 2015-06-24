@@ -41,14 +41,13 @@ local function water_flow_logic(param2,pos_testing,direction)
 	end
 end
 
---sum of directions must be less than 5
-function to_unit_vector(dir_vector)
+--sum of direction vectors must match an array index
+local function to_unit_vector(dir_vector)
 	--(sum,root)
 	-- (0,1), (1,1+0=1), (2,1+1=2), (3,1+2^2=5), (4,2^2+2^2=8)
-	local roots = {[0] = 1, [1] = 1, [2] = 1.414213562373095, [4] = 2, [5] = 2.236067977499789, [8] = 2.828427124746190}
-	local sum = math.abs(dir_vector.x)^2 + math.abs(dir_vector.z)^2
-	local vector_out = {x=dir_vector.x/roots[sum],y=dir_vector.y,z=dir_vector.z/roots[sum]}
-	return vector_out
+	local inv_roots = {[0] = 1, [1] = 1, [2] = 0.70710678118655, [4] = 0.5, [5] = 0.44721359549996, [8] = 0.35355339059327}
+	local sum = dir_vector.x*dir_vector.x + dir_vector.z*dir_vector.z
+	return {x=dir_vector.x*inv_roots[sum],y=dir_vector.y,z=dir_vector.z*inv_roots[sum]}
 end
 
 --full 16 directions + 0 --matches rendered directions

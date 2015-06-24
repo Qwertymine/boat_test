@@ -228,6 +228,7 @@ function boat_test.on_step(self, dtime)
 		end--]]
 	end
 	--add any more functionality before this block
+	object:setpos(self.object:getpos())
 	object:setvelocity({x=velocity.x,y=velocity.y,z=velocity.z})
 	object:setacceleration({x=(flow.x-water_resistance_vector.x)/total_mass,y=flow.y,z=(flow.z-water_resistance_vector.z)/total_mass})
 end
