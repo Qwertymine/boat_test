@@ -1,4 +1,3 @@
-dofile(minetest.get_modpath("boat_test").."/waterlib.lua")
 dofile(minetest.get_modpath("boat_test").."/complexphy.lua")
 dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 
@@ -127,18 +126,18 @@ function boat_test.on_step(self, dtime)
 	
 	
 	--if moving the centre of the boat is expensive, disabled by default
-	if MOVECENTRE and node_is_water(node) then
+	if MOVECENTRE and node_is_liquid(node) then
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
 	
 	--get initial water direction
-	flow = quick_water_flow(pos,node)
+	flow = quick_flow(pos,node)
 	
 	flow = {x=flow.x*water_force,y=0,z=flow.z*water_force}
 	
 	
 	--make it float
-	if node_is_water(node) then
+	if node_is_liquid(node) then
 		--boat particles and sounds are pretty, enabled by default
 		if PARTICLES then
 			boat_particles(object,velocity,realpos)
@@ -167,7 +166,7 @@ function boat_test.on_step(self, dtime)
 			object:get_luaentity().in_water = false
 		--logic for floating smoothly in water
 		elseif (math.abs(velocity.y) < 0.3) and 
-		(node_is_water(node_below)) and 
+		(node_is_liquid(node_below)) and 
 		(pos.y - realpos.y) > 0.2 then
 		--must fall faster than float - flow physics only happen while in water
 			flow.y = -3

@@ -9,7 +9,8 @@ WTFPL
 
 License of media (textures and sounds):
 ---------------------------------------
-WTFPL
+WTFPL for all media from the boats mod
+See /sounds/credits.txt for the license of the sounds
 
 Authors of media files:
 -----------------------
