@@ -1,10 +1,9 @@
-dofile(minetest.get_modpath("boat_test").."/complexphy.lua")
 dofile(minetest.get_modpath("boat_test").."/infotools.lua")
 
 --values for complex physics
 local BOATRAD = 0.4
 local PARTICLES = true
-local MOVCEN = false
+local MOVECENTRE = false
 --Physics Constants are at line 100-ish
 
 --helper functions
@@ -198,15 +197,13 @@ local player_turn_force = 3000--3*1000 N
 local water_resistance = 200 --N/speed^2
 
 function boat_test.on_step(self, dtime)
-	
 	--object synonims
 	local driver = self.driver
 	local object = self.object
 	--physics constants
+	local player_turn_force = player_turn_force
 	local total_mass = boat_mass
 	--vectors
-	--flow.x and.z are forces,flow.y is acceleration
-	local water_resistance_vector = {x=0,y=0,z=0}
 	--other
 	local velocity = object:getvelocity()
 	local realpos = self.object:getpos()
@@ -226,12 +223,12 @@ function boat_test.on_step(self, dtime)
 		player_turn_force = player_turn_force * self.v
 	--end
 	
-	water_resistance_vector = get_velocity_vector(water_resistance
-			*self.v*self.v,yaw,water_resistance_vector.y)
+	local water_resistance_vector = get_velocity_vector(water_resistance
+			*self.v*self.v,yaw,0)
 	
 	
 	--if moving the centre of the boat is expensive, disabled by default
-	if MOVECENTRE and node_is_liquid(node) then
+	if MOVECENTRE and flowlib.node_is_liquid(node) then
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
 	
@@ -246,10 +243,16 @@ function boat_test.on_step(self, dtime)
 			boat_particles(object,velocity,realpos)
 		end
 		--logic for floating smoothly in water
-		object:get_luaentity().in_water = true
+		self.in_water = true
 		if (math.abs(velocity.y) < 0.3) and 
 		(not flowlib.is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
 		(realpos.y - pos.y) > 0.2 then
+			--this sets the boat to sit just below the surface of
+			--the liquid
+			if math.abs(velocity.y) < 0.1 and (realpos.y - pos.y) > 0.4 then
+				velocity.y = 0 
+				object:setpos({x=realpos.x,y=pos.y+0.45,z=realpos.z})
+			end
 			flow.y = 0.5
 		--slow down boats that fall into water smoothly
 		elseif velocity.y < 0 then
@@ -266,17 +269,17 @@ function boat_test.on_step(self, dtime)
 			velocity.x = 0
 			velocity.z = 0
 			beached = true
-			object:get_luaentity().in_water = false
+			self.in_water = false
 		--logic for floating smoothly in water
 		elseif (math.abs(velocity.y) < 0.3) and 
 		(flowlib.node_is_liquid(node_below)) and 
 		(pos.y - realpos.y) > 0.2 then
 		--must fall faster than float - flow physics only happen while in water
 			flow.y = -3
-			object:get_luaentity().in_water = true
+			self.in_water = true
 		else
 			flow.y = -10
-			object:get_luaentity().in_water = false
+			self.in_water = false
 		end
 	end
 	
