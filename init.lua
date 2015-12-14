@@ -18,6 +18,110 @@ local function get_v(v)
 	return math.sqrt(v.x ^ 2 + v.z ^ 2)
 end
 
+local function boat_particles(object,velocity,realpos)
+	if object:get_luaentity().in_water == false then
+		--do sounds and particles for water bounces
+		if velocity.y < 0 and velocity.y > -3 then
+			minetest.sound_play("soft_splash", {
+				pos = {object:getpos()},
+				max_hear_distance = 20,
+				gain = 0.01,
+			})
+			minetest.add_particlespawner({
+				amount = 10,
+				time = 1,
+				minpos = {x=realpos.x-1, y=realpos.y, z=realpos.z-1},
+				maxpos = {x=realpos.x+1, y=realpos.y, z=realpos.z+1},
+				minvel = {x=0, y=0, z=0},
+				maxvel = {x=0, y=0, z=0},
+				minacc = {x=0, y=0, z=0},
+				maxacc = {x=0, y=1, z=0},
+				minexptime = 1,
+				maxexptime = 1,
+				minsize = 1,
+				maxsize = 1,
+				collisiondetection = false,
+				vertical = false,
+				texture = "bubble.png",
+			})
+
+
+		elseif velocity.y <= -3 and velocity.y > -10 then
+			minetest.sound_play("medium_splash", {
+				pos = {object:getpos()},
+				max_hear_distance = 20,
+				gain = 0.05,
+			})
+			minetest.add_particlespawner({
+				amount = 15,
+				time = 1,
+				minpos = {x=realpos.x-1, y=realpos.y, z=realpos.z-1},
+				maxpos = {x=realpos.x+1, y=realpos.y, z=realpos.z+1},
+				minvel = {x=0, y=0, z=0},
+				maxvel = {x=0, y=0, z=0},
+				minacc = {x=0, y=0, z=0},
+				maxacc = {x=0, y=2, z=0},
+				minexptime = 1,
+				maxexptime = 1,
+				minsize = 1,
+				maxsize = 1,
+				collisiondetection = false,
+				vertical = false,
+				texture = "bubble.png",
+			})
+
+		elseif velocity.y <= -10 then
+			minetest.sound_play("big_splash", {
+				pos = {object:getpos()},
+				max_hear_distance = 20,
+				gain = 0.07,
+			})
+			minetest.add_particlespawner({
+				amount = 20,
+				time = 0.5,
+				minpos = {x=realpos.x-1, y=realpos.y, z=realpos.z-1},
+				maxpos = {x=realpos.x+1, y=realpos.y, z=realpos.z+1},
+				minvel = {x=0, y=0, z=0},
+				maxvel = {x=0, y=0, z=0},
+				minacc = {x=0, y=0, z=0},
+				maxacc = {x=0, y=3, z=0},
+				minexptime = 1,
+				maxexptime = 1,
+				minsize = 1,
+				maxsize = 1,
+				collisiondetection = false,
+				vertical = false,
+				texture = "bubble.png",
+			})
+		end
+	end
+end
+
+--if not in water but touching, move centre to touching block
+--x has higher precedence than z
+--if pos changes with x, it affects z
+local function move_centre(pos,realpos,node,BOATRAD)
+	if is_touching_water(realpos.x,pos.x,BOATRAD) then
+		if is_water({x=pos.x-1,y=pos.y,z=pos.z}) then
+			node = minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
+			pos = {x=pos.x-1,y=pos.y,z=pos.z}
+		elseif is_water({x=pos.x+1,y=pos.y,z=pos.z}) then
+			node = minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
+			pos = {x=pos.x+1,y=pos.y,z=pos.z}
+		end
+	end
+	if is_touching_water(realpos.z,pos.z,BOATRAD) then
+		if is_water({x=pos.x,y=pos.y,z=pos.z-1}) then
+			node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
+			pos = {x=pos.x,y=pos.y,z=pos.z-1}
+		elseif is_water({x=pos.x,y=pos.y,z=pos.z+1}) then
+			node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
+			pos = {x=pos.x,y=pos.y,z=pos.z+1}
+		end
+	end
+	return pos,node
+end
+
 local boat_test = {
 	physical = true,
 	collisionbox = {-0.4, -0.4, -0.4, 0.4, 0.3, 0.4},
@@ -86,29 +190,29 @@ function boat_test.on_punch(self, puncher, time_from_last_punch, tool_capabiliti
 	end
 end
 
+local player_mass = 740 --N
+local boat_mass = 1000 --N
+local player_force = 5220--3*1740 N
+local water_force = 4500--4.5*1000 N
+local player_turn_force = 3000--3*1000 N
+local water_resistance = 200 --N/speed^2
+
 function boat_test.on_step(self, dtime)
 	
 	--object synonims
 	local driver = self.driver
 	local object = self.object
 	--physics constants
-	local player_mass = 740 --N
-	local boat_mass = 1000 --N
-	local player_force = 5220--3*1740 N
-	local water_force = 4500--4.5*1000 N
-	local player_turn_force = 3000--3*1000 N
-	local water_resistance = 200 --N/speed^2
 	local total_mass = boat_mass
 	--vectors
 	--flow.x and.z are forces,flow.y is acceleration
-	local flow = {x=0,y=0,z=0}
 	local water_resistance_vector = {x=0,y=0,z=0}
 	--other
 	local velocity = object:getvelocity()
 	local realpos = self.object:getpos()
-	local pos = {x=math.floor(realpos.x+0.5),y=math.floor(realpos.y+0.5),z=math.floor(realpos.z+0.5)}
+	local pos = {x=math.floor(realpos.x+0.5),y=math.floor(realpos.y+0.5)
+		,z=math.floor(realpos.z+0.5)}
 	local node   = minetest.get_node({x=pos.x,y=pos.y,z=pos.z})
-	local param2 = node.param2
 	local beached = false
 	
 	--setup physics variables
@@ -122,7 +226,8 @@ function boat_test.on_step(self, dtime)
 		player_turn_force = player_turn_force * self.v
 	--end
 	
-	water_resistance_vector = get_velocity_vector(water_resistance*self.v*self.v,yaw,water_resistance_vector.y)
+	water_resistance_vector = get_velocity_vector(water_resistance
+			*self.v*self.v,yaw,water_resistance_vector.y)
 	
 	
 	--if moving the centre of the boat is expensive, disabled by default
@@ -131,13 +236,11 @@ function boat_test.on_step(self, dtime)
 	end
 	
 	--get initial water direction
-	flow = quick_flow(pos,node)
-	
-	flow = {x=flow.x*water_force,y=0,z=flow.z*water_force}
-	
+	local flow = flowlib.quick_flow(pos,node)
+	flow.x = flow.x*water_force ; flow.z = flow.z*water_force
 	
 	--make it float
-	if node_is_liquid(node) then
+	if flowlib.node_is_liquid(node) then
 		--boat particles and sounds are pretty, enabled by default
 		if PARTICLES then
 			boat_particles(object,velocity,realpos)
@@ -145,7 +248,7 @@ function boat_test.on_step(self, dtime)
 		--logic for floating smoothly in water
 		object:get_luaentity().in_water = true
 		if (math.abs(velocity.y) < 0.3) and 
-		(not is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
+		(not flowlib.is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
 		(realpos.y - pos.y) > 0.2 then
 			flow.y = 0.5
 		--slow down boats that fall into water smoothly
@@ -166,7 +269,7 @@ function boat_test.on_step(self, dtime)
 			object:get_luaentity().in_water = false
 		--logic for floating smoothly in water
 		elseif (math.abs(velocity.y) < 0.3) and 
-		(node_is_liquid(node_below)) and 
+		(flowlib.node_is_liquid(node_below)) and 
 		(pos.y - realpos.y) > 0.2 then
 		--must fall faster than float - flow physics only happen while in water
 			flow.y = -3
