@@ -312,14 +312,14 @@ function boat_test.on_step(self, dtime)
 				self.v = 0.05
 				velocity = get_velocity_vector(self.v,yaw,velocity.y)
 			end
-			turn_force_vector = get_velocity_vector(player_turn_force,yaw+90,turn_force_vector.y)
+			turn_force_vector = get_velocity_vector(player_turn_force,yaw+90,0)
 		elseif ctrl.right then
 			if self.v < 0.05 then
 				self.v = 0.05
 				velocity = get_velocity_vector(self.v,yaw,velocity.y)
 			end
 			--correct yaw change to turn right is 89 for some reason...
-			turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,turn_force_vector.y)
+			turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,0)
 		end
 		--add to flow
 		if turn_force_vector then
