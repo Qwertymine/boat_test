@@ -133,6 +133,9 @@ local boat_test = {
 	last_v = 0,
 	removed = false,
 	in_water = false,
+	--off the map to garentee update
+	--uses minetest.hash_node_position
+	pos_last = math.huge,
 }
 
 function boat_test.on_rightclick(self, clicker)
@@ -201,7 +204,6 @@ function boat_test.on_step(self, dtime)
 	local driver = self.driver
 	local object = self.object
 	--physics constants
-	local player_turn_force = player_turn_force
 	local total_mass = boat_mass
 	--vectors
 	--other
@@ -217,14 +219,6 @@ function boat_test.on_step(self, dtime)
 	--setup self.v and any dependant variables
 	self.v = math.abs(get_v(velocity))
 	
-	--if self.v < 1 then
-		--player_turn_force = player_turn_force * math.sqrt(self.v)
-	--else
-		player_turn_force = player_turn_force * self.v
-	--end
-	
-	local water_resistance_vector = get_velocity_vector(water_resistance
-			*self.v*self.v,yaw,0)
 	
 	
 	--if moving the centre of the boat is expensive, disabled by default
@@ -283,54 +277,53 @@ function boat_test.on_step(self, dtime)
 		end
 	end
 	
+	local player_turn_force = player_turn_force * self.v
+	if beached then
+		player_turn_force = 30
+	end
+	
+	local water_resistance_vector = get_velocity_vector(water_resistance
+			*self.v*self.v,yaw,0)
 	if driver then
 		total_mass = boat_mass + player_mass
-		local player_force_vector = {x=0,y=0,z=0}
-		local turn_force_vector = {x=0,y=0,z=0}
+		local player_force_vector
+		local turn_force_vector
 		local ctrl = self.driver:get_player_control()
 		if ctrl.up and not beached then
-			player_force_vector = get_velocity_vector(player_force,yaw,player_force_vector.y)
+			player_force_vector = get_velocity_vector(player_force,yaw,0)
 		elseif ctrl.down and not beached then
 			--if moving very slowly
 			if not (self.v < 0.2) then
 			--Multiplies by speed to avoid issues with turning multiple times
-				player_force_vector = get_velocity_vector(-player_force*self.v,yaw,player_force_vector.y)
+				player_force_vector = get_velocity_vector(-player_force*self.v,yaw,0)
 			else
-				velocity = {x=0,y=velocity.y,z=0}
+				velocity.x = 0
+				velocity.z = 0
 			end
 		end
 		--add to flow
-		flow = {x=flow.x+player_force_vector.x,y=flow.y,z=flow.z+player_force_vector.z}
-		
+		if player_force_vector then
+			flow.x = flow.x + player_force_vector.x 
+			flow.z = flow.z + player_force_vector.z	
+		end
+
 		if ctrl.left then
 			if self.v < 0.05 then
 				self.v = 0.05
-				local temp = get_velocity_vector(self.v,yaw,velocity.y)
-				velocity = {x=temp.x,y=velocity.y,z=temp.z}
-				if beached then
-					player_turn_force = 30
-				end
+				velocity = get_velocity_vector(self.v,yaw,velocity.y)
 			end
 			turn_force_vector = get_velocity_vector(player_turn_force,yaw+90,turn_force_vector.y)
 		elseif ctrl.right then
 			if self.v < 0.05 then
 				self.v = 0.05
-				local temp = get_velocity_vector(self.v,yaw,velocity.y)
-				velocity = {x=temp.x,y=velocity.y,z=temp.z}
-				if beached then
-					player_turn_force = 30
-				end
+				velocity = get_velocity_vector(self.v,yaw,velocity.y)
 			end
 			--correct yaw change to turn right is 89 for some reason...
 			turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,turn_force_vector.y)
 		end
 		--add to flow
-		flow = {x=flow.x+turn_force_vector.x,y=flow.y,z=flow.z+turn_force_vector.z}
-		--dev testing feature
-		--[[
-		if ctrl.jump then
-			minetest.chat_send_all(self.v .. "," .. dtime)
-		end--]]
+		flow.x = flow.x + turn_force_vector.x
+		flow.z = flow.z + turn_force_vector.z
 	end
 	--add any more functionality before this block
 	object:setpos(self.object:getpos())
