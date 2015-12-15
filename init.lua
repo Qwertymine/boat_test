@@ -322,8 +322,10 @@ function boat_test.on_step(self, dtime)
 			turn_force_vector = get_velocity_vector(-player_turn_force,yaw+89,turn_force_vector.y)
 		end
 		--add to flow
-		flow.x = flow.x + turn_force_vector.x
-		flow.z = flow.z + turn_force_vector.z
+		if turn_force_vector then
+			flow.x = flow.x + turn_force_vector.x
+			flow.z = flow.z + turn_force_vector.z
+		end
 	end
 	--add any more functionality before this block
 	object:setpos(self.object:getpos())
