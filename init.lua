@@ -135,7 +135,10 @@ local boat_test = {
 	in_water = false,
 	--off the map to garentee update
 	--uses minetest.hash_node_position
-	pos_last = math.huge,
+	pos_last = nil,
+	flow_last = nil,
+	flow_timer = 1,
+
 }
 
 function boat_test.on_rightclick(self, clicker)
@@ -165,6 +168,8 @@ function boat_test.on_activate(self, staticdata, dtime_s)
 		self.v = tonumber(staticdata)
 	end
 	self.last_v = self.v
+	self.pos_last = {x=math.huge,y=0,z=math.huge}
+	self.flow_last = {x=0,y=0,z=0}
 end
 
 function boat_test.get_staticdata(self)
@@ -226,9 +231,29 @@ function boat_test.on_step(self, dtime)
 		pos,node = move_centre(pos,realpos,node,BOATRAD)
 	end
 	
+	local flow
 	--get initial water direction
-	local flow = flowlib.quick_flow(pos,node)
+	if pos.x == self.pos_last.x and pos.y == self.pos_last.y
+	and pos.z == self.pos_last.z then
+		self.flow_timer = self.flow_timer - dtime
+		if self.flow_timer < 0 then
+			flow = flowlib.quick_flow(pos,node)
+			self.flow_last.x = flow.x
+			self.flow_last.z = flow.z
+			self.flow_timer = 1
+		else
+			flow = table.copy(self.flow_last)
+		end
+	else
+		flow = flowlib.quick_flow(pos,node)
+		self.flow_last.x = flow.x
+		self.flow_last.z = flow.z
+		self.flow_timer = 1
+		self.pos_last = pos
+	end
+
 	flow.x = flow.x*water_force ; flow.z = flow.z*water_force
+		
 	
 	--make it float
 	if flowlib.node_is_liquid(node) then
