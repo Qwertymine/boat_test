@@ -101,7 +101,7 @@ end
 --if pos changes with x, it affects z
 local function move_centre(pos,realpos,node,BOATRAD)
 	if flowlib.is_touching(realpos.x,pos.x,BOATRAD) then
-		if flow_lib.is_liquid({x=pos.x-1,y=pos.y,z=pos.z}) then
+		if flowlib.is_liquid({x=pos.x-1,y=pos.y,z=pos.z}) then
 			node = minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
 			pos = {x=pos.x-1,y=pos.y,z=pos.z}
 		elseif flowlib.is_liquid({x=pos.x+1,y=pos.y,z=pos.z}) then
