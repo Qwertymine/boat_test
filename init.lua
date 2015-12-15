@@ -100,20 +100,20 @@ end
 --x has higher precedence than z
 --if pos changes with x, it affects z
 local function move_centre(pos,realpos,node,BOATRAD)
-	if is_touching_water(realpos.x,pos.x,BOATRAD) then
-		if is_water({x=pos.x-1,y=pos.y,z=pos.z}) then
+	if flowlib.is_touching(realpos.x,pos.x,BOATRAD) then
+		if flow_lib.is_liquid({x=pos.x-1,y=pos.y,z=pos.z}) then
 			node = minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
 			pos = {x=pos.x-1,y=pos.y,z=pos.z}
-		elseif is_water({x=pos.x+1,y=pos.y,z=pos.z}) then
+		elseif flowlib.is_liquid({x=pos.x+1,y=pos.y,z=pos.z}) then
 			node = minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
 			pos = {x=pos.x+1,y=pos.y,z=pos.z}
 		end
 	end
-	if is_touching_water(realpos.z,pos.z,BOATRAD) then
-		if is_water({x=pos.x,y=pos.y,z=pos.z-1}) then
+	if flowlib.is_touching_water(realpos.z,pos.z,BOATRAD) then
+		if flowlib.is_liquid({x=pos.x,y=pos.y,z=pos.z-1}) then
 			node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
 			pos = {x=pos.x,y=pos.y,z=pos.z-1}
-		elseif is_water({x=pos.x,y=pos.y,z=pos.z+1}) then
+		elseif flowlib.is_liquid({x=pos.x,y=pos.y,z=pos.z+1}) then
 			node = minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
 			pos = {x=pos.x,y=pos.y,z=pos.z+1}
 		end
@@ -264,7 +264,7 @@ function boat_test.on_step(self, dtime)
 		--logic for floating smoothly in water
 		self.in_water = true
 		if (math.abs(velocity.y) < 0.3) and 
-		(not flowlib.is_water({x=pos.x,y=pos.y+1,z=pos.z})) and 
+		(not flowlib.is_liquid({x=pos.x,y=pos.y+1,z=pos.z})) and 
 		(realpos.y - pos.y) > 0.2 then
 			--this sets the boat to sit just below the surface of
 			--the liquid
